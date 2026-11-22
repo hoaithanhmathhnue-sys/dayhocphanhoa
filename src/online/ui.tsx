@@ -1,3 +1,4 @@
+import { AuthorCredit } from '../components/Author';
 import React from 'react';
 import { ArrowLeft, BookOpen, Loader2 } from 'lucide-react';
 import { isFirebaseConfigured } from './firebase';
@@ -94,5 +95,8 @@ export const OnlineShell: React.FC<{
         </div>
       )}
     </main>
+    <footer className="mt-6 border-t border-teal-200/70 bg-white/80 py-4 text-center no-print">
+      <AuthorCredit />
+    </footer>
   </div>
 );

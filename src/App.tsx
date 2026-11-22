@@ -27,6 +27,7 @@ import {
 import { setModelFallbackListener } from './services/geminiService';
 import { STATUS_META } from './utils/scoring';
 import { Header } from './components/Header';
+import { AuthorCredit } from './components/Author';
 import { ApiKeyModal } from './components/ApiKeyModal';
 import { VisitCounter } from './components/VisitCounter';
 import { ClassStationTab } from './components/tabs/ClassStationTab';
@@ -512,6 +513,7 @@ export const App: React.FC = () => {
           <p className="text-xs font-semibold text-slate-600">
             <strong>MathDiff 5 AI</strong> — Hỗ trợ thực hiện <em>Biện pháp 3: Vận dụng trí tuệ nhân tạo hỗ trợ tổ chức hoạt động dạy học phân hóa trên lớp</em> (Môn Toán lớp 5 • Bộ Kết nối tri thức với cuộc sống)
           </p>
+          <AuthorCredit />
           <VisitCounter />
         </div>
       </footer>

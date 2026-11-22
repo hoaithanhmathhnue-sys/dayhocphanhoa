@@ -10,6 +10,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import type { AiProvider, DifferentiatedLesson } from '../types/education';
+import { AuthorButton } from './Author';
 
 interface HeaderProps {
   lessons: DifferentiatedLesson[];
@@ -52,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden rounded-full bg-teal-100 px-2.5 py-0.5 text-[11px] font-bold text-teal-800 sm:inline-block">
                 Biện pháp 3 • Toán 5 KNTT
               </span>
+              <AuthorButton compact />
             </div>
             <p className="text-xs text-slate-600">
               Điều phối dạy học phân hóa trên lớp (1 Máy tính GV + Màn hình tương tác/Tivi)

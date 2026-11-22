@@ -66,3 +66,7 @@ git push -u origin main
 4. *(Tuỳ chọn)* Mở mục **Environment Variables** nếu muốn cài sẵn key hệ thống:
    - `VITE_GEMINI_API_KEYS`: nhập 1 hoặc nhiều key cách nhau bởi dấu phẩy (hoặc bỏ trống để giáo viên tự nhập trực tiếp qua nút **Cấu hình API Key** trên giao diện web).
 5. Bấm **Deploy** và sử dụng đường link chính thức ngay trên lớp học!
+
+## Tác giả
+
+**Lê Thị Ngọc Mai** — Giáo viên Trường Tiểu học Lý Thường Kiệt.
