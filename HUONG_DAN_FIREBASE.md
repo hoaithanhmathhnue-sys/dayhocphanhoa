@@ -66,6 +66,12 @@ Các giá trị này là cấu hình công khai của ứng dụng web, không p
 3. Mở cửa sổ ẩn danh, vào `https://dayhocphanhoatoan5.vercel.app/#/hoc-sinh`, đăng nhập bằng phiếu vừa in, làm bài, nộp bài.
 4. Quay lại trang giáo viên, xem kết quả, chấm thử câu tự luận.
 
+## Khi ứng dụng có tính năng mới: cập nhật luật
+
+Mỗi khi tệp `firestore.rules` trong mã nguồn thay đổi, cần dán lại **toàn bộ** nội dung tệp vào **Firestore Database → Rules** rồi bấm **Publish**. Nếu chưa cập nhật, tính năng mới sẽ báo "Không có quyền thực hiện thao tác này".
+
+- **Bản 22/11/2026** thêm mục `teacherLessons`: thư viện bài học riêng của từng giáo viên, dùng để đồng bộ giữa các máy. Mỗi giáo viên chỉ đọc và ghi được bài của chính mình; học sinh không truy cập được.
+
 ## Cách dùng hằng ngày
 
 - **Giáo viên**: nút **Giao bài online** trên thanh tiêu đề, hoặc vào thẳng `.../#/giao-bai`.
@@ -73,6 +79,8 @@ Các giá trị này là cấu hình công khai của ứng dụng web, không p
 - **Mã PIN chỉ hiện một lần** khi tạo (hệ thống không lưu PIN). Nếu học sinh quên, bấm **Cấp lại PIN**: học sinh nhận phiếu mới, PIN cũ không dùng được nữa.
 - **Mỗi học sinh nhận bộ câu trắc nghiệm của trạm mình**. Đổi trạm ở thẻ "Lớp học & PIN". Câu tự luận dùng chung cả lớp.
 - **Nộp một lần.** Muốn cho học sinh làm lại, giáo viên bấm **Cho làm lại** ở bài của em đó.
+- **Thêm lớp từ file**: ở "Lớp học & PIN", bấm **Tải danh sách từ file Excel/Word**. App nhận `.xlsx`, `.docx`, `.csv`, `.txt` và tự tìm cột "Họ và tên" (hoặc hai cột "Họ đệm" + "Tên"). Nếu file có cột "Trạm" (ghi Khởi Hành / Tăng Tốc / Bứt Phá), app xếp trạm luôn. File được đọc ngay trên trình duyệt, không tải lên máy chủ. File Office cũ `.xls`/`.doc` cần "Lưu thành" `.xlsx`/`.docx` trước.
+- **Thư viện bài học** (`.../#/bai-hoc`): tự soạn bài mới không cần AI, sửa mọi phần của bài, nhân bản bài mẫu, xoá, xuất/nhập tệp `.json` để chia sẻ trong tổ. Khi giáo viên đăng nhập Google, bài được lưu lên tài khoản và tự đồng bộ giữa các máy.
 - **Lưu trữ**: cuối mỗi đợt, bấm **Xuất bảng điểm (CSV)** để lưu kết quả về máy. Tệp CSV mở được bằng Excel.
 
 ## Giới hạn của gói miễn phí

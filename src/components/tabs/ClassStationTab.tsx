@@ -8,6 +8,7 @@ import {
   Users,
   ArrowRightLeft,
 } from 'lucide-react';
+import { ClassFileUpload } from '../ClassFileUpload';
 import type { StationTier, Student } from '../../types/education';
 import { CLASSDOJO_BADGES, STATION_META } from '../../utils/scoring';
 
@@ -39,6 +40,7 @@ export const ClassStationTab: React.FC<ClassStationTabProps> = ({
   } | null>(null);
   const [showImportBox, setShowImportBox] = useState(false);
   const [bulkNamesText, setBulkNamesText] = useState('');
+  const [fileNotice, setFileNotice] = useState<{ ok: boolean; msg: string } | null>(null);
   const [bulkStation, setBulkStation] = useState<StationTier>('tang-toc');
 
   const stationsOrder: StationTier[] = ['khoi-hanh', 'tang-toc', 'but-pha'];
@@ -104,7 +106,7 @@ export const ClassStationTab: React.FC<ClassStationTabProps> = ({
       {showImportBox && (
         <div className="rounded-2xl border-2 border-teal-300 bg-teal-50/50 p-5 shadow-sm animate-fade-slide">
           <h3 className="text-base font-bold text-teal-950">
-            📋 Dán nhanh danh sách học sinh lớp của Thầy/Cô (mỗi dòng 1 họ tên)
+            📋 Dán danh sách học sinh (mỗi dòng 1 họ tên) hoặc tải file Excel/Word
           </h3>
           <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="md:col-span-2">
@@ -134,6 +136,21 @@ export const ClassStationTab: React.FC<ClassStationTabProps> = ({
                   Avatar ngộ nghĩnh ({AVATAR_POOL.slice(0, 5).join(' ')}) sẽ được gán tự động và lưu trên máy tính này.
                 </p>
               </div>
+              <ClassFileUpload
+                className="min-h-[40px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-50"
+                onError={(m) => setFileNotice({ ok: false, msg: m })}
+                onLoaded={(res, fileName) => {
+                  setBulkNamesText(res.entries.map((e) => e.name).join('\n'));
+                  const st = res.entries.find((e) => e.station)?.station;
+                  if (st && res.entries.every((e) => !e.station || e.station === st)) setBulkStation(st);
+                  setFileNotice({ ok: true, msg: `Đã đọc ${res.entries.length} họ tên từ "${fileName}". Kiểm tra lại rồi bấm "Lưu thêm vào lớp học".` });
+                }}
+              />
+              {fileNotice && (
+                <p className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${fileNotice.ok ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-50 text-rose-900'}`}>
+                  {fileNotice.msg}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handleImportSubmit}

@@ -18,6 +18,12 @@ import type {
 } from './types/education';
 import { INITIAL_STUDENTS_5A, SAMPLE_LESSONS } from './data/sampleLessons';
 import { apiKeyManager } from './services/apiKeyManager';
+import {
+  ACTIVE_LESSON_KEY,
+  OPEN_TAB_KEY,
+  loadCustomLessons,
+  saveCustomLessons,
+} from './services/lessonStore';
 import { setModelFallbackListener } from './services/geminiService';
 import { STATUS_META } from './utils/scoring';
 import { Header } from './components/Header';
@@ -32,7 +38,6 @@ import { AdaptivePracticeTab } from './components/tabs/AdaptivePracticeTab';
 type StepTabId = 'step-1' | 'step-2' | 'step-3' | 'step-4' | 'step-5';
 
 const STUDENTS_STORAGE_KEY = 'mathdiff5_students_v1';
-const CUSTOM_LESSONS_STORAGE_KEY = 'mathdiff5_custom_lessons_v1';
 
 const AVATARS = ['🐼', '🐰', '🐻', '🐱', '🐶', '🐨', '🦊', '🐹', '🐯', '🐸', '🦁', '🦄', '🐵', '🐥', '🐧', '🦉', '🐬'];
 
@@ -58,25 +63,26 @@ export const App: React.FC = () => {
   const [tvMode, setTvMode] = useState<boolean>(false);
 
   // Tab hiện tại (Mặc định mở Bước 3 để thấy ngay Bài 21: 3 Cây cầu & Live Dashboard)
-  const [activeTab, setActiveTab] = useState<StepTabId>('step-3');
-
-  // Danh sách bài học (3 bài mẫu chuẩn SGK + các bài GV tạo thêm bằng AI)
-  const [lessons, setLessons] = useState<DifferentiatedLesson[]>(() => {
-    try {
-      const savedCustom = localStorage.getItem(CUSTOM_LESSONS_STORAGE_KEY);
-      if (savedCustom) {
-        const parsed = JSON.parse(savedCustom) as DifferentiatedLesson[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return [...SAMPLE_LESSONS, ...parsed];
-        }
-      }
-    } catch {
-      // Ignore storage error
-    }
-    return SAMPLE_LESSONS;
+  const [activeTab, setActiveTab] = useState<StepTabId>(() => {
+    // Thư viện bài học có thể yêu cầu mở thẳng một bước (ví dụ Xưởng AI soạn bài)
+    const t = localStorage.getItem(OPEN_TAB_KEY);
+    localStorage.removeItem(OPEN_TAB_KEY);
+    return t === 'step-1' || t === 'step-2' || t === 'step-3' || t === 'step-4' || t === 'step-5' ? t : 'step-3';
   });
 
-  const [activeLessonId, setActiveLessonId] = useState<string>(SAMPLE_LESSONS[0].id);
+  // Danh sách bài học (3 bài mẫu chuẩn SGK + các bài GV tạo thêm bằng AI)
+  const [lessons, setLessons] = useState<DifferentiatedLesson[]>(() => [
+    ...SAMPLE_LESSONS,
+    ...loadCustomLessons(),
+  ]);
+
+  const [activeLessonId, setActiveLessonId] = useState<string>(
+    () => localStorage.getItem(ACTIVE_LESSON_KEY) || SAMPLE_LESSONS[0].id,
+  );
+
+  useEffect(() => {
+    localStorage.setItem(ACTIVE_LESSON_KEY, activeLessonId);
+  }, [activeLessonId]);
 
   // Danh sách học sinh lớp 5A
   const [students, setStudents] = useState<Student[]>(() => {
@@ -138,7 +144,7 @@ export const App: React.FC = () => {
     try {
       const sampleIds = new Set(SAMPLE_LESSONS.map((s) => s.id));
       const customOnly = lessons.filter((l) => !sampleIds.has(l.id));
-      localStorage.setItem(CUSTOM_LESSONS_STORAGE_KEY, JSON.stringify(customOnly));
+      saveCustomLessons(customOnly);
     } catch {
       // Ignore quota errors
     }
@@ -241,13 +247,15 @@ export const App: React.FC = () => {
 
   // Các hàm cập nhật Bài học & Bức tường Padlet
   const handleAddGeneratedLesson = (newLesson: DifferentiatedLesson) => {
-    setLessons((prev) => [newLesson, ...prev]);
+    setLessons((prev) => [{ ...newLesson, updatedAt: Date.now() }, ...prev]);
     setActiveLessonId(newLesson.id);
     showToast('✨ Đã tạo kịch bản phân hóa mới! Thầy/Cô hãy kiểm duyệt trước khi phát bài.');
   };
 
   const handleUpdateActiveLesson = (updated: DifferentiatedLesson) => {
-    setLessons((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+    setLessons((prev) =>
+      prev.map((l) => (l.id === updated.id ? { ...updated, updatedAt: Date.now() } : l)),
+    );
   };
 
   const handleApproveAndLaunch = () => {

@@ -173,3 +173,37 @@ describe('Nộp bài', () => {
     await assertSucceeds(deleteDoc(doc(t1, `submissions/a1_${S1}`)));
   });
 });
+
+describe('Thư viện bài học trên tài khoản giáo viên', () => {
+  const lesson = (uid: string) => ({ ownerUid: uid, lessonId: 'custom-1', title: 'Bài 24: Nhân', json: '{"id":"custom-1"}', updatedAt: Date.now() });
+
+  it('giáo viên lưu, đọc, xoá bài của mình', async () => {
+    const db = teacher(T1);
+    await assertSucceeds(setDoc(doc(db, `teacherLessons/${T1}__custom-1`), lesson(T1)));
+    await assertSucceeds(getDoc(doc(db, `teacherLessons/${T1}__custom-1`)));
+    await assertSucceeds(getDocs(query(collection(db, 'teacherLessons'), where('ownerUid', '==', T1))));
+    await assertSucceeds(deleteDoc(doc(db, `teacherLessons/${T1}__custom-1`)));
+  });
+
+  it('không đọc, không sửa, không ghi đè bài của giáo viên khác; không ghi vào mã của người khác', async () => {
+    await assertSucceeds(setDoc(doc(teacher(T1), `teacherLessons/${T1}__custom-1`), lesson(T1)));
+    await assertFails(getDoc(doc(teacher(T2), `teacherLessons/${T1}__custom-1`)));
+    await assertFails(setDoc(doc(teacher(T2), `teacherLessons/${T1}__custom-1`), lesson(T2)));
+    await assertFails(setDoc(doc(teacher(T2), `teacherLessons/${T1}__custom-2`), lesson(T2)));
+    await assertFails(getDocs(query(collection(teacher(T2), 'teacherLessons'), where('ownerUid', '==', T1))));
+    await assertFails(deleteDoc(doc(teacher(T2), `teacherLessons/${T1}__custom-1`)));
+  });
+
+  it('học sinh và người chưa đăng nhập không đọc/ghi được thư viện', async () => {
+    await assertSucceeds(setDoc(doc(teacher(T1), `teacherLessons/${T1}__custom-1`), lesson(T1)));
+    await assertFails(getDoc(doc(student(S1), `teacherLessons/${T1}__custom-1`)));
+    await assertFails(setDoc(doc(student(S1), `teacherLessons/${S1}__x`), lesson(S1)));
+    await assertFails(getDoc(doc(anon(), `teacherLessons/${T1}__custom-1`)));
+  });
+
+  it('chặn tài liệu quá lớn hoặc có trường lạ', async () => {
+    const db = teacher(T1);
+    await assertFails(setDoc(doc(db, `teacherLessons/${T1}__big`), { ...lesson(T1), json: 'x'.repeat(900001) }));
+    await assertFails(setDoc(doc(db, `teacherLessons/${T1}__extra`), { ...lesson(T1), role: 'admin' }));
+  });
+});

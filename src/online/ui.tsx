@@ -51,12 +51,13 @@ export const btn = {
 export const inputCls =
   'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200';
 
-export const OnlineShell: React.FC<{ title: string; subtitle: string; right?: React.ReactNode; children: React.ReactNode }> = ({
-  title,
-  subtitle,
-  right,
-  children,
-}) => (
+export const OnlineShell: React.FC<{
+  title: string;
+  subtitle: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  requireFirebase?: boolean;
+}> = ({ title, subtitle, right, children, requireFirebase = true }) => (
   <div className="min-h-screen bg-gradient-to-b from-teal-50/60 via-slate-50 to-emerald-50/40 text-slate-900">
     <header className="border-b border-teal-200/80 bg-white/95 shadow-xs no-print">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6">
@@ -78,7 +79,7 @@ export const OnlineShell: React.FC<{ title: string; subtitle: string; right?: Re
       </div>
     </header>
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-6">
-      {isFirebaseConfigured() ? (
+      {!requireFirebase || isFirebaseConfigured() ? (
         children
       ) : (
         <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-sm leading-relaxed text-amber-950">

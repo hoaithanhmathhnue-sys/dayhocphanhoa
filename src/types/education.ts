@@ -98,6 +98,7 @@ export interface DifferentiatedLesson {
   practiceQuestions: Question[];
   passingScore: number; // 75%
   isApprovedByTeacher: boolean;
+  updatedAt?: number; // mốc sửa gần nhất (ms) — dùng khi đồng bộ bài học giữa các máy
 }
 
 export interface QuizAttemptResult {

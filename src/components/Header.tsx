@@ -2,6 +2,7 @@ import React from 'react';
 import {
   BookOpen,
   KeyRound,
+  Library,
   Monitor,
   Send,
   Sparkles,
@@ -86,6 +87,16 @@ export const Header: React.FC<HeaderProps> = ({
             <Sparkles className="h-4 w-4 text-amber-600" />
             <span className="hidden sm:inline">Soạn bài AI mới</span>
           </button>
+
+          {/* Thư viện bài học: thêm, sửa, sao lưu, chia sẻ bài */}
+          <a
+            href="#/bai-hoc"
+            title="Thêm bài mới (tự soạn hoặc bằng AI), sửa, nhân bản, xoá, xuất/nhập tệp bài học"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 md:text-sm"
+          >
+            <Library className="h-4 w-4 text-teal-600" />
+            <span>Thư viện bài học</span>
+          </a>
 
           {/* Giao bài online (cần đăng nhập) */}
           <a

@@ -15,6 +15,7 @@ import {
 } from '../api';
 import { STATIONS, STATION_EMOJI, STATION_LABEL, formatStudentNumber, parseNameList } from '../model';
 import { ErrorBox, Spinner, btn, friendlyError, inputCls } from '../ui';
+import { ClassFileUpload } from '../../components/ClassFileUpload';
 import { PinSlips } from './PinSlips';
 
 interface Props {
@@ -46,6 +47,8 @@ export const ClassManager: React.FC<Props> = ({ user, classes, onClassesChanged,
   const [namesText, setNamesText] = useState('');
   const [station, setStation] = useState<StationTier>('tang-toc');
   const [localImport, setLocalImport] = useState<{ name: string; station: StationTier }[] | null>(null);
+  const [importLabel, setImportLabel] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
   const [slips, setSlips] = useState<PinSlip[] | null>(null);
 
   const cls = classes.find((c) => c.id === selectedId) ?? null;
@@ -94,6 +97,7 @@ export const ClassManager: React.FC<Props> = ({ user, classes, onClassesChanged,
       made = await addStudents(cls, user.uid, entries, (d, t) => setBusy(`add:${d}/${t}`));
       setNamesText('');
       setLocalImport(null);
+      setNotice(null);
     } catch (e) {
       setErr(`${friendlyError(e)} (Các học sinh tạo xong trước khi lỗi vẫn được giữ lại.)`);
     } finally {
@@ -212,7 +216,8 @@ export const ClassManager: React.FC<Props> = ({ user, classes, onClassesChanged,
               </h3>
               {localImport ? (
                 <div className="mt-3 rounded-xl bg-teal-50 p-3 text-sm">
-                  Sẽ thêm <strong>{localImport.length}</strong> học sinh từ danh sách Bước 1 (giữ nguyên trạm của từng em).
+                  Sẽ thêm <strong>{localImport.length}</strong> học sinh {importLabel} (giữ nguyên trạm của từng em; em nào chưa ghi trạm xếp vào {STATION_LABEL[station]}).
+                  <span className="mt-1 block text-xs text-slate-600">{localImport.map((e) => e.name).join(', ')}</span>
                   <button type="button" className="ml-2 text-xs font-bold text-teal-800 underline" onClick={() => setLocalImport(null)}>
                     Huỷ
                   </button>
@@ -244,14 +249,31 @@ export const ClassManager: React.FC<Props> = ({ user, classes, onClassesChanged,
                       onClick={() => {
                         const l = readLocalClass();
                         if (l.length === 0) setErr('Không tìm thấy danh sách lớp ở Bước 1 trên máy này.');
-                        else setLocalImport(l);
+                        else {
+                          setImportLabel('từ danh sách Bước 1');
+                          setLocalImport(l);
+                        }
                       }}
                     >
                       Lấy tên và trạm từ danh sách Bước 1
                     </button>
+                    <ClassFileUpload
+                      onError={(m) => setErr(m)}
+                      onLoaded={(res, fileName) => {
+                        setErr(null);
+                        if (res.entries.some((e) => e.station)) {
+                          setImportLabel(`từ file "${fileName}"`);
+                          setLocalImport(res.entries.map((e) => ({ name: e.name, station: e.station ?? station })));
+                        } else {
+                          setNamesText(res.entries.map((e) => e.name).join('\n'));
+                        }
+                        setNotice(`Đã đọc ${res.entries.length} họ tên từ "${fileName}" (${res.source}). Thầy/cô kiểm tra lại danh sách trước khi tạo tài khoản.`);
+                      }}
+                    />
                   </div>
                 </div>
               )}
+              {notice && <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">{notice}</p>}
               <div className="mt-3 flex items-center gap-3">
                 <button
                   type="button"

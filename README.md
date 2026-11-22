@@ -29,6 +29,14 @@ Ngoài phần dạy trên lớp (không cần đăng nhập), ứng dụng có t
 - **Giáo viên** (`#/giao-bai`) đăng nhập Google → tạo lớp (mã lớp 6 kí tự) → thêm học sinh, ứng dụng tự cấp **mã PIN 6 số** và in phiếu đăng nhập → giao bài trắc nghiệm **theo trạm** (nạp sẵn từ bài học, tự soạn hoặc nhờ AI tạo rồi duyệt) kèm câu tự luận → xem bảng điểm, chấm tự luận, nhận xét, cho làm lại, xuất CSV.
 - **Học sinh** (`#/hoc-sinh`) đăng nhập bằng mã lớp + số thứ tự + PIN, chỉ thấy bộ câu của trạm mình, nộp một lần, xem đáp án và lời giải thích sau khi nộp, xem nhận xét của giáo viên.
 - Dữ liệu lưu trên **Firebase (Authentication + Firestore, gói Spark miễn phí)**; phân quyền bằng [`firestore.rules`](firestore.rules) (vai trò không lưu trong dữ liệu nên không tự nâng quyền được; đáp án tách riêng, HS chỉ đọc sau khi nộp).
+- **Thêm lớp từ file Excel/Word** (`.xlsx`, `.docx`, `.csv`, `.txt`): tự nhận cột "Họ và tên" hoặc "Họ đệm" + "Tên", cột "Trạm" nếu có; dùng được ở cả Bước 1 và phần giao bài online; đọc ngay trên trình duyệt.
+
+## 📚 Thư viện bài học (`#/bai-hoc`)
+
+- Tự soạn bài mới (không cần AI) hoặc mở Xưởng AI; sửa đầy đủ: thông tin chung, tình huống và số liệu cho học cụ, ảnh minh hoạ (tự nén), nhiệm vụ và gợi ý 3 trạm, cách giải mẫu, quy tắc, câu luyện tập theo trạm.
+- Nhân bản bài mẫu để sửa, xoá bài, "Dạy bài này" mở thẳng bài ở trang dạy trên lớp.
+- Xuất/nhập tệp `.json` để chia sẻ trong tổ chuyên môn (bài trùng mã được nhập thành bản mới, không ghi đè).
+- Đăng nhập Google để lưu bài lên tài khoản (Firestore `teacherLessons`) và đồng bộ hai chiều giữa các máy.
 - Cài đặt: xem **[HUONG_DAN_FIREBASE.md](HUONG_DAN_FIREBASE.md)**. Kiểm thử luật bảo mật: `npm run test:rules` (cần Java 11+).
 
 ---

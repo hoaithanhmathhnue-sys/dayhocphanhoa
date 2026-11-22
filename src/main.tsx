@@ -6,8 +6,10 @@ import './index.css';
 // Phần giao bài online tải riêng (chứa thư viện Firebase) để trang dạy trên lớp vẫn mở nhanh.
 const TeacherPortal = lazy(() => import('./online/TeacherPortal'));
 const StudentPortal = lazy(() => import('./online/StudentPortal'));
+const LessonLibrary = lazy(() => import('./library/LessonLibrary'));
 
-const routeOf = (hash: string) => (hash.startsWith('#/giao-bai') ? 'teacher' : hash.startsWith('#/hoc-sinh') ? 'student' : 'class');
+const routeOf = (hash: string) =>
+  hash.startsWith('#/giao-bai') ? 'teacher' : hash.startsWith('#/hoc-sinh') ? 'student' : hash.startsWith('#/bai-hoc') ? 'library' : 'class';
 
 const Root: React.FC = () => {
   const [route, setRoute] = useState(() => routeOf(window.location.hash));
@@ -23,7 +25,7 @@ const Root: React.FC = () => {
   if (route === 'class') return <App />;
   return (
     <Suspense fallback={<div className="p-10 text-center text-sm font-semibold text-slate-500">Đang tải…</div>}>
-      {route === 'teacher' ? <TeacherPortal /> : <StudentPortal />}
+      {route === 'teacher' ? <TeacherPortal /> : route === 'library' ? <LessonLibrary /> : <StudentPortal />}
     </Suspense>
   );
 };
