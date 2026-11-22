@@ -1,0 +1,135 @@
+rules_version = '2';
+
+// MathDiff 5 AI — luật bảo mật cho chức năng "Giao bài online".
+// Vai trò KHÔNG lưu trong dữ liệu (nên không ai tự nâng quyền được):
+//   • Giáo viên  = đăng nhập bằng Google (sign_in_provider == 'google.com').
+//   • Học sinh   = đăng nhập bằng tài khoản email/PIN do giáo viên tạo, và có hồ sơ studentProfiles/{uid}.
+// Không có điều kiện thời hạn kiểu "request.time < ..." cho toàn bộ cơ sở dữ liệu → chạy lâu dài ở production mode.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isTeacher() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function ownsClass(classId) {
+      return isTeacher() && exists(/databases/$(database)/documents/classes/$(classId))
+        && get(/databases/$(database)/documents/classes/$(classId)).data.teacherUid == request.auth.uid;
+    }
+    function profile() {
+      return get(/databases/$(database)/documents/studentProfiles/$(request.auth.uid)).data;
+    }
+    function isStudentOf(classId) {
+      return signedIn() && !isTeacher()
+        && exists(/databases/$(database)/documents/studentProfiles/$(request.auth.uid))
+        && profile().classId == classId && profile().active == true;
+    }
+    function shortText(v, max) { return v is string && v.size() <= max; }
+
+    // ---------------- Lớp học ----------------
+    match /classes/{classId} {
+      allow read: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+      allow create: if isTeacher()
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['teacherUid', 'teacherName', 'name', 'code', 'nextNumber', 'createdAt'])
+        && shortText(request.resource.data.name, 80)
+        && request.resource.data.code is string && request.resource.data.code.matches('^[A-Z2-9]{6}$')
+        && request.resource.data.nextNumber == 1;
+      allow update: if isTeacher() && resource.data.teacherUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'nextNumber'])
+        && shortText(request.resource.data.name, 80)
+        && request.resource.data.nextNumber is int && request.resource.data.nextNumber >= resource.data.nextNumber;
+      allow delete: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+    }
+
+    // ---------------- Bảng tra đăng nhập (MÃLỚP-SỐTT → email tài khoản) ----------------
+    // Ai cũng "get" được một khoá cụ thể để đăng nhập, nhưng KHÔNG liệt kê được (list bị cấm).
+    match /loginMap/{key} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ownsClass(request.resource.data.classId)
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['email', 'classId', 'teacherUid'])
+        && request.resource.data.email is string && request.resource.data.email.matches('^[a-z0-9-]+@hs[.]mathdiff5[.]app$')
+        && (resource == null || resource.data.teacherUid == request.auth.uid);
+      allow delete: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+    }
+
+    // ---------------- Hồ sơ học sinh (id = uid tài khoản HS) ----------------
+    match /studentProfiles/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid
+        || (isTeacher() && resource.data.teacherUid == request.auth.uid));
+      allow list: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+      allow create: if ownsClass(request.resource.data.classId)
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['classId', 'teacherUid', 'name', 'number', 'station', 'loginKey', 'active', 'createdAt'])
+        && shortText(request.resource.data.name, 80)
+        && request.resource.data.number is int && request.resource.data.number > 0
+        && request.resource.data.station in ['khoi-hanh', 'tang-toc', 'but-pha']
+        && request.resource.data.active is bool;
+      allow update: if isTeacher() && resource.data.teacherUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'station', 'active'])
+        && shortText(request.resource.data.name, 80)
+        && request.resource.data.station in ['khoi-hanh', 'tang-toc', 'but-pha'];
+      allow delete: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+    }
+
+    // ---------------- Bài giao ----------------
+    match /assignments/{aid} {
+      allow read: if (isTeacher() && resource.data.teacherUid == request.auth.uid)
+        || isStudentOf(resource.data.classId);
+      allow create: if ownsClass(request.resource.data.classId)
+        && request.resource.data.teacherUid == request.auth.uid;
+      allow update: if isTeacher() && resource.data.teacherUid == request.auth.uid
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.classId == resource.data.classId;
+      allow delete: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+
+      // Khoá đáp án: GV chủ bài đọc/ghi; HS chỉ đọc SAU KHI đã nộp bài của mình.
+      match /private/{doc} {
+        allow read: if (isTeacher() && get(/databases/$(database)/documents/assignments/$(aid)).data.teacherUid == request.auth.uid)
+          || (signedIn() && exists(/databases/$(database)/documents/submissions/$(aid + '_' + request.auth.uid)));
+        allow write: if isTeacher() && get(/databases/$(database)/documents/assignments/$(aid)).data.teacherUid == request.auth.uid;
+      }
+    }
+
+    // ---------------- Bài nộp (id = <mã bài giao>_<uid học sinh>) ----------------
+    match /submissions/{sid} {
+      function assignment(aid) { return get(/databases/$(database)/documents/assignments/$(aid)).data; }
+
+      allow get: if signedIn() && (resource.data.studentUid == request.auth.uid
+        || (isTeacher() && resource.data.teacherUid == request.auth.uid));
+      allow list: if signedIn() && (resource.data.studentUid == request.auth.uid
+        || (isTeacher() && resource.data.teacherUid == request.auth.uid));
+
+      // HS nộp đúng một lần, đúng bài của lớp mình, trước hạn, khi bài còn mở; không sửa được sau khi nộp.
+      allow create: if isStudentOf(request.resource.data.classId)
+        && sid == request.resource.data.assignmentId + '_' + request.auth.uid
+        && request.resource.data.studentUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['assignmentId', 'classId', 'teacherUid', 'studentUid', 'studentName', 'number', 'station', 'answers', 'essays', 'submittedAt'])
+        && assignment(request.resource.data.assignmentId).classId == request.resource.data.classId
+        && assignment(request.resource.data.assignmentId).teacherUid == request.resource.data.teacherUid
+        && assignment(request.resource.data.assignmentId).isOpen == true
+        && request.time < assignment(request.resource.data.assignmentId).dueAt
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.station == profile().station
+        && request.resource.data.number == profile().number
+        && request.resource.data.answers is map && request.resource.data.answers.size() <= 60
+        && request.resource.data.essays is map && request.resource.data.essays.size() <= 10;
+
+      // Chỉ GV chủ bài được chấm tự luận / nhận xét; không đổi được câu trả lời của HS.
+      allow update: if isTeacher() && resource.data.teacherUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['essayScores', 'feedback', 'gradedAt'])
+        && (!('feedback' in request.resource.data) || shortText(request.resource.data.feedback, 1000));
+
+      // GV xoá bài nộp = cho HS làm lại.
+      allow delete: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+    }
+
+    // Mọi đường dẫn khác: cấm.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

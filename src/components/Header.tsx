@@ -3,6 +3,7 @@ import {
   BookOpen,
   KeyRound,
   Monitor,
+  Send,
   Sparkles,
   Tv,
   CheckCircle2,
@@ -85,6 +86,16 @@ export const Header: React.FC<HeaderProps> = ({
             <Sparkles className="h-4 w-4 text-amber-600" />
             <span className="hidden sm:inline">Soạn bài AI mới</span>
           </button>
+
+          {/* Giao bài online (cần đăng nhập) */}
+          <a
+            href="#/giao-bai"
+            title="Giáo viên giao bài tập về nhà theo trạm, học sinh làm online bằng mã lớp và mã PIN"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-teal-300 bg-teal-50 px-3.5 py-2 text-xs font-bold text-teal-900 transition hover:bg-teal-100 md:text-sm"
+          >
+            <Send className="h-4 w-4 text-teal-600" />
+            <span>Giao bài online</span>
+          </a>
 
           {/* Chế độ Màn hình Tivi */}
           <button

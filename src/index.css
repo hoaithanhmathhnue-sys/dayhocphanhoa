@@ -44,3 +44,26 @@
 .animate-fade-slide {
   animation: fadeInSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* In phiếu đăng nhập học sinh (Giao bài online) */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .slip {
+    break-inside: avoid;
+  }
+}

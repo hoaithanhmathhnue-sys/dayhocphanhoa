@@ -22,6 +22,17 @@
 
 ---
 
+## 📮 Giao bài online (phân quyền Giáo viên / Học sinh)
+
+Ngoài phần dạy trên lớp (không cần đăng nhập), ứng dụng có thêm chức năng **giao bài tập về nhà**:
+
+- **Giáo viên** (`#/giao-bai`) đăng nhập Google → tạo lớp (mã lớp 6 kí tự) → thêm học sinh, ứng dụng tự cấp **mã PIN 6 số** và in phiếu đăng nhập → giao bài trắc nghiệm **theo trạm** (nạp sẵn từ bài học, tự soạn hoặc nhờ AI tạo rồi duyệt) kèm câu tự luận → xem bảng điểm, chấm tự luận, nhận xét, cho làm lại, xuất CSV.
+- **Học sinh** (`#/hoc-sinh`) đăng nhập bằng mã lớp + số thứ tự + PIN, chỉ thấy bộ câu của trạm mình, nộp một lần, xem đáp án và lời giải thích sau khi nộp, xem nhận xét của giáo viên.
+- Dữ liệu lưu trên **Firebase (Authentication + Firestore, gói Spark miễn phí)**; phân quyền bằng [`firestore.rules`](firestore.rules) (vai trò không lưu trong dữ liệu nên không tự nâng quyền được; đáp án tách riêng, HS chỉ đọc sau khi nộp).
+- Cài đặt: xem **[HUONG_DAN_FIREBASE.md](HUONG_DAN_FIREBASE.md)**. Kiểm thử luật bảo mật: `npm run test:rules` (cần Java 11+).
+
+---
+
 ## 🚀 Hướng dẫn Đưa lên GitHub & Deploy qua Vercel.com
 
 ### 1. Chạy thử trên máy cá nhân

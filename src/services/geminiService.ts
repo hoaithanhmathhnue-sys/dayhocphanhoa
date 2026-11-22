@@ -838,3 +838,43 @@ Trả về JSON dạng mảng 3 chuỗi: ["Câu hỏi 1...", "Câu hỏi 2...", 
   const parsed = JSON.parse(cleanJsonText(res.text));
   return Array.isArray(parsed) ? parsed.map(String) : [];
 };
+
+/**
+ * Giao bài online: AI tạo câu trắc nghiệm cho một trạm. Kết quả CHỈ là đề xuất — giáo viên phải duyệt/sửa trước khi giao.
+ */
+export const generateStationQuestionsAI = async (params: {
+  lessonTitle: string;
+  objectives: string[];
+  stationName: string;
+  stationFocus: string;
+  count: number;
+}): Promise<{ text: string; options: string[]; correct: string; explanation: string }[]> => {
+  const prompt = `Soạn ${params.count} câu hỏi trắc nghiệm (4 phương án, đúng 1 đáp án) để học sinh lớp 5 tự làm ở nhà, bài "${params.lessonTitle}" (Toán 5 — Kết nối tri thức với cuộc sống).
+Yêu cầu cần đạt: ${params.objectives.join('; ') || '(theo bài học)'}.
+Mức độ dành cho ${params.stationName}: ${params.stationFocus}.
+Quy tắc bắt buộc:
+- Chỉ dùng kiến thức trong chương trình lớp 5 đến bài này; số thập phân viết bằng dấu phẩy (ví dụ 2,75).
+- Tự kiểm tra lại phép tính; đáp án đúng phải trùng nguyên văn với một phương án.
+- Lời giải thích ngắn gọn, dễ hiểu với học sinh lớp 5.
+Trả về JSON là một mảng: [{"text": "...", "options": ["...","...","...","..."], "correct": "...", "explanation": "..."}]`;
+
+  const res = await generateContentWithModelFallback({
+    label: 'online-station-questions',
+    thinkingLevel: ThinkingLevel.MEDIUM,
+    maxOutputTokens: 4096,
+    responseMimeType: 'application/json',
+    systemInstruction: SYSTEM_PEDAGOGY_TOAN5,
+    contents: prompt,
+  });
+
+  const parsed = JSON.parse(cleanJsonText(res.text));
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((q: Record<string, unknown>) => ({
+      text: String(q.text ?? '').trim(),
+      options: Array.isArray(q.options) ? q.options.map((o) => String(o).trim()) : [],
+      correct: String(q.correct ?? '').trim(),
+      explanation: String(q.explanation ?? '').trim(),
+    }))
+    .filter((q) => q.text && q.options.length >= 2 && q.options.includes(q.correct));
+};
