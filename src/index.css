@@ -34,10 +34,13 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
+/* Không dùng animation-fill-mode "forwards": nếu giữ lại transform sau hiệu ứng,
+   khung tab trở thành khối chứa của các hộp thoại position: fixed bên trong,
+   làm hộp "Phóng to Tivi" / tặng huy hiệu bị đẩy ra ngoài màn hình. */
 .animate-fade-slide {
-  animation: fadeInSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
